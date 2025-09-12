@@ -1,0 +1,272 @@
+<?php
+include '../partials/auth_check.php';
+include '../partials/dbconnect.php';
+$current_month = isset($_GET['month']) ? $_GET['month'] : date('Y-m');
+// echo $current_month;
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?= DateTime::createFromFormat('Y-m', $current_month)->format('F Y') ?> Month Report</title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+
+    <!-- DataTables CSS + JS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+
+    <!-- DataTables Buttons Extension -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css">
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.flash.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
+
+    <style>
+        body {
+            background: rgb(213, 214, 218);
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .btn-back,
+        .btn-toggle {
+            text-decoration: none;
+            background: linear-gradient(to right, #007bff, #0056b3);
+            color: white !important;
+            padding: 10px 18px;
+            border-radius: 5px;
+            font-weight: bold;
+            margin: 5px;
+            border: none;
+            transition: background 0.3s ease;
+        }
+
+        .btn-toggle:hover,
+        .btn-back:hover {
+            background: linear-gradient(to right, #0056b3, #003f7f);
+        }
+
+        .container-card {
+            width: 95%;
+            margin: 20px auto;
+            background-color: #fff;
+            border: 20px solid #fff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+            padding: 15px;
+        }
+
+        table {
+            width: 100%;
+        }
+
+        thead {
+            background-color: #007bff;
+            color: white;
+        }
+
+        th,
+        td {
+            padding: 10px;
+            text-align: left;
+        }
+
+        tbody tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        tbody tr:hover {
+            background-color: #e1f0ff;
+        }
+
+        @media screen and (max-width: 768px) {
+
+            table,
+            thead,
+            tbody,
+            th,
+            td,
+            tr {
+                display: block;
+            }
+
+            th,
+            td {
+                padding: 8px;
+                font-size: 14px;
+            }
+
+            thead {
+                display: none;
+            }
+
+            td {
+                border-bottom: 1px solid #ddd;
+                position: relative;
+                padding-left: 50%;
+            }
+
+            td::before {
+                position: absolute;
+                top: 8px;
+                left: 8px;
+                width: 45%;
+                padding-right: 10px;
+                white-space: nowrap;
+                font-weight: bold;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="text-end mt-3 px-3">
+        <a href="adminpannel.php" class="btn-back">← Back to Admin Panel</a>
+    </div>
+
+    <form method="GET" class="container mt-4">
+        <div class="row justify-content-center">
+            <div class="col-md-4">
+                <div class="card shadow-sm p-3">
+                    <div class="form-group mb-3">
+                        <label for="month" class="form-label fw-bold">Select Month:</label>
+                        <input type="month" class="form-control" id="month" name="month" value="<?= htmlspecialchars($current_month); ?>">
+                    </div>
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-primary w-100">Filter</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <div class="text-center mt-3">
+        <button class="btn-toggle" onclick="showReport('billing')">Billing Report</button>
+        <button class="btn-toggle" onclick="showReport('purchase')">Purchase Report</button>
+    </div>
+
+    <!-- Billing Report -->
+    <div id="billingReport" class="container-card">
+        <center>
+            <h3><?= DateTime::createFromFormat('Y-m', $current_month)->format('F Y') ?> Billing Report</h3>
+        </center>
+        <table id="reportTable" class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Invoice No</th>
+                    <th>Generated By</th>
+                    <th>Date</th>
+                    <th>Customer Name</th>
+                    <th>Mobile</th>
+                    <th>Product</th>
+                    <th>Qty</th>
+                    <th>Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php
+                $bills = mysqli_query($con, "SELECT * FROM bill_master where bill_date LIKE '$current_month%' ORDER BY bill_id ASC");
+                while ($bill = mysqli_fetch_assoc($bills)) {
+                    $bill_id = $bill['bill_id'];
+                    $items = mysqli_query($con, "SELECT * FROM bill_items WHERE bill_id = $bill_id");
+                    while ($item = mysqli_fetch_assoc($items)) {
+                        echo "<tr>
+                            <td>{$bill['bill_id']}</td>
+                            <td>{$bill['employee_name']}</td>
+                            <td>{$bill['bill_date']}</td>
+                            <td>{$bill['customer_name']}</td>
+                            <td>{$bill['c_mobile']}</td>
+                            <td>{$item['product_name']}</td>
+                            <td>{$item['quantity']}</td>
+                            <td>₹{$item['total_price']}</td>
+                        </tr>";
+                    }
+                }
+                ?>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Purchase Report -->
+    <div id="purchaseReport" class="container-card" style="display: none;">
+        <center>
+            <h3><?= DateTime::createFromFormat('Y-m', $current_month)->format('F Y') ?> Purchase Report</h3>
+        </center>
+        <table id="secondTable" class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Purchase No</th>
+                    <th>Supplier Name</th>
+                    <th>Supplier Number</th>
+                    <th>Order Date</th>
+                    <th>Expected Date</th>
+                    <th>Status</th>
+                    <th>Delivered Date</th>
+                    <th>Total Amount</th>
+                    <th>Product</th>
+                    <th>Qty</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php
+                $result = mysqli_query($con, "SELECT p.purchase_id, s.supplier_name, s.phone, p.order_date, p.expected_delivery_date, p.status, p.delivered_date, p.total_amount, pr.p_name, pi.quantity FROM purchases p JOIN suppliers s ON p.supplier_id = s.supplier_id JOIN purchase_items pi ON p.purchase_id = pi.purchase_id JOIN products pr ON pi.p_id = pr.p_id where p.order_date LIKE '$current_month%' ORDER BY p.purchase_id ASC");
+                while ($row = mysqli_fetch_assoc($result)) {
+                    echo "<tr>
+                        <td>{$row['purchase_id']}</td>
+                        <td>{$row['supplier_name']}</td>
+                        <td>{$row['phone']}</td>
+                        <td>" . date('Y-m-d', strtotime($row['order_date'])) . "</td>
+                        <td>" . date('Y-m-d', strtotime($row['expected_delivery_date'])) . "</td>
+                        <td>{$row['status']}</td>
+                        <td>" . ($row['delivered_date'] ? date('Y-m-d', strtotime($row['delivered_date'])) : 'Not Delivered') . "</td>
+                        <td>₹{$row['total_amount']}</td>
+                        <td>{$row['p_name']}</td>
+                        <td>{$row['quantity']}</td>
+                    </tr>";
+                }
+                ?>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        function showReport(type) {
+            if (type === 'billing') {
+                $('#billingReport').show();
+                $('#purchaseReport').hide();
+            } else {
+                $('#billingReport').hide();
+                $('#purchaseReport').show();
+            }
+        }
+
+        $(document).ready(function() {
+            $('#reportTable').DataTable({
+                dom: 'Bfrtip',
+                buttons: ['excelHtml5', 'pdfHtml5', 'print']
+            });
+
+            $('#secondTable').DataTable({
+                dom: 'Bfrtip',
+                buttons: ['excelHtml5', 'pdfHtml5', 'print']
+            });
+        });
+    </script>
+</body>
+
+</html>

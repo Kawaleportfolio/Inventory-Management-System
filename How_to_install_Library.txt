@@ -1,0 +1,5 @@
+install generate barcode liabrary:
+1. install composer
+2. open cmd and go to your project path..
+3. composer require picqer/php-barcode-generator  enter this command
+4. open php.ini file and edit it with [;extension=gd  to  extension=gd] .
