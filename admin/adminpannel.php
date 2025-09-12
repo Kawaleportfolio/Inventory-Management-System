@@ -2,6 +2,7 @@
 include '../partials/dbconnect.php';
 include '../partials/auth_check.php';
 ?>
+<!-- Upload on Github -->
 
 <!DOCTYPE html>
 <html lang="en">
