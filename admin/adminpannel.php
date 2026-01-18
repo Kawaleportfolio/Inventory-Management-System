@@ -161,7 +161,7 @@ include '../partials/auth_check.php';
                 <div class="dropdown">
                     <img src="../assets/images/default_user.png" class="profile-pic dropdown-toggle" id="profileDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
-                        <li><a class="dropdown-item" href="#">View Profile</a></li>
+                        <li><a class="dropdown-item" href="view_profile.php">View Profile</a></li>
                         <li><a class="dropdown-item" href="#">Settings</a></li>
                         <li>
                             <hr class="dropdown-divider">
