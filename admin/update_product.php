@@ -14,8 +14,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $cost = floatval($_POST['cost_price']);
     $selling = floatval($_POST['selling_price']);
+    $gst = intval($_POST['gst_percent']);
 
-    $query = "UPDATE products SET p_name = '$name',company_name = '$brand',category = '$category_name',cost_price = $cost,selling_price = $selling WHERE p_id = $id";
+    $query = "UPDATE products SET p_name = '$name',company_name = '$brand',category = '$category_name',cost_price = $cost,selling_price = $selling,gst_percent= $gst WHERE p_id = $id";
     // echo "<script>console.log(" . json_encode($query) . ");</script>";
     mysqli_query($con, $query);
 

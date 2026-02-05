@@ -97,7 +97,9 @@ $purchases = mysqli_query($con, "select * from purchases where status='Pending'"
             </tr>
           </thead>
           <tbody>
-            <?php while ($row = mysqli_fetch_assoc($purchases)) { ?>
+            <?php while ($row = mysqli_fetch_assoc($purchases)) { 
+                $display_amt= $row['total_amount'];
+              ?>
               <tr>
                 <td><?= $row['purchase_id']; ?></td>
                 <!-- fetch supplier name by supplier id -->
@@ -129,7 +131,7 @@ $purchases = mysqli_query($con, "select * from purchases where status='Pending'"
     <div class="modal-dialog modal-lg modal-dialog-centered">
       <div class="modal-content">
         <div class="modal-header">
-          <h4 class="modal-title" id="productModalLabel"><!-- this line display by ajax script --></h4>
+          <h4 class="modal-title" id="productModalLabel"><!-- this line display by ajax script --></h4><h5 class="mb-0 text-center w-100">Total: <?= $display_amt ?></h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">

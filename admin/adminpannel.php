@@ -268,7 +268,7 @@ include '../partials/auth_check.php';
                     <div class="col">
                         <div class="card border-primary shadow-sm">
                             <div class="card-body">
-                                <h6 class="card-title text-primary">📥 Monthly Purchases</h6>
+                                <h6 class="card-title text-primary">📥 Monthly Purchases (Incl. GST)</h6>
                                 <?php
                                 // $month = date('Y-m');
                                 // $month = "2025-07";
@@ -300,7 +300,7 @@ include '../partials/auth_check.php';
                     <div class="col">
                         <div class="card border-warning shadow-sm">
                             <div class="card-body">
-                                <h6 class="card-title text-warning">💰 Monthly Sale Amount</h6>
+                                <h6 class="card-title text-warning">💰 Monthly Sale Amount (Incl. GST)</h6>
                                 <?php
                                 $sale_amt = mysqli_fetch_assoc(mysqli_query($con, "SELECT SUM(total_amount) AS total FROM bill_master WHERE DATE_FORMAT(bill_date, '%Y-%m') = '$currentMonthName'"));
                                 $monthly_sale_amt = $sale_amt['total'] ?? 0;
@@ -315,11 +315,15 @@ include '../partials/auth_check.php';
                     <div class="col">
                         <div class="card border-danger shadow-sm">
                             <div class="card-body">
-                                <h6 class="card-title text-danger">📈 Estimated Profit</h6>
+                                <h6 class="card-title text-danger">📈 Estimated Profit (Excl. GST)</h6>
                                 <?php
                                 $sale_costprice = mysqli_fetch_assoc(mysqli_query($con, "SELECT SUM(p.cost_price * bi.quantity) AS total_costing_value FROM bill_master bm JOIN bill_items bi ON bm.bill_id = bi.bill_id JOIN products p ON bi.p_id = p.p_id WHERE DATE_FORMAT(bm.bill_date, '%Y-%m') = '$currentMonthName'"));
                                 $total_cost_price = $sale_costprice['total_costing_value'];
-                                $profit = $monthly_sale_amt - $total_cost_price;
+
+                                $sale_taxable_amt = mysqli_fetch_assoc(mysqli_query($con,"select SUM(total) as total from bill_items where bill_id in ( select bill_id from bill_master where DATE_FORMAT(bill_date, '%Y-%m') = '$currentMonthName')"));
+                                $taxable_amt = $sale_taxable_amt['total'];
+
+                                $profit = $taxable_amt - $total_cost_price;
                                 ?>
                                 <p class="card-text fs-5 fw-bold <?= ($profit >= 0) ? 'text-success' : 'text-danger' ?>">
                                     ₹ <?= number_format($profit, 2) ?>
@@ -360,7 +364,11 @@ include '../partials/auth_check.php';
                                  <?php
                                 $today_cost_price = mysqli_fetch_assoc(mysqli_query($con, "SELECT SUM(p.cost_price * bi.quantity) AS total_costing_value FROM bill_master bm JOIN bill_items bi ON bm.bill_id = bi.bill_id JOIN products p ON bi.p_id = p.p_id WHERE bm.bill_date = '$today_date'"));
                                 $total_today_cost = $today_cost_price['total_costing_value'];
-                                $today_profit = $today_sale_amt - $total_today_cost;
+
+                                $today_taxable_amt = mysqli_fetch_assoc(mysqli_query($con,"select SUM(total) as total from bill_items where bill_id in ( select bill_id from bill_master where bill_date = '$today_date')"));
+                                $t_taxable_amt = $today_taxable_amt['total'];
+
+                                $today_profit = $t_taxable_amt - $total_today_cost;
                                 ?>
                                 <div class="col-md-4 d-flex flex-column align-items-md-end">
                                     <label class="text-muted">📈 Estimated Profit</label>
@@ -389,7 +397,7 @@ include '../partials/auth_check.php';
                         <!-- 🔻 Section: Low Stock Alerts -->
                         <h6 class="text-danger fw-bold mb-2 border-bottom pb-1">⚠️ Low Stock Alerts</h6>
                         <?php
-                        $products = mysqli_query($con, "SELECT product_name, product_qty FROM product_stock WHERE product_qty <= 90 and product_qty !=0");
+                        $products = mysqli_query($con, "SELECT product_name, product_qty FROM product_stock WHERE product_qty <= 90 or product_qty = 0");
                         $hasLowStock = false;
                         while ($row = mysqli_fetch_assoc($products)) {
                             $hasLowStock = true;

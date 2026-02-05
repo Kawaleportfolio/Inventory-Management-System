@@ -9,7 +9,7 @@ $response = ['success' => false];
 if ($barcode) {
     $barcode = mysqli_real_escape_string($con, $barcode);
 
-    $query = mysqli_query($con, "SELECT p_id, p_name, barcode, selling_price FROM products WHERE barcode = '$barcode' LIMIT 1");
+    $query = mysqli_query($con, "SELECT p_id, p_name, barcode, selling_price, gst_percent FROM products WHERE barcode = '$barcode' LIMIT 1");
 
     if ($row = mysqli_fetch_assoc($query)) {
         $p_id = $row['p_id'];
@@ -22,7 +22,8 @@ if ($barcode) {
             'name' => $row['p_name'],
             'barcode' => $row['barcode'],
             'price' => $row['selling_price'],
-            'ava_qty' => $stock['product_qty'] ?? 0
+            'ava_qty' => $stock['product_qty'],
+            'gst' => $row['gst_percent'] ?? 0
         ];
     }
 }

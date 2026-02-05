@@ -116,6 +116,11 @@ $category_result = mysqli_query($con, "SELECT DISTINCT category_name FROM catego
         <input type="number" id="quantityInput" class="form-control" min="1">
       </div>
 
+      <div class="col-md-3 col-sm-6">
+        <label class="form-label">GST (%)</label>
+        <input type="number" id="gstInput" class="form-control" disabled>
+      </div>
+
       <div class="col-md-2 col-sm-6 d-flex align-items-end">
         <button id="addbtn" class="btn btn-primary w-100">Add</button>
       </div>
@@ -134,7 +139,10 @@ $category_result = mysqli_query($con, "SELECT DISTINCT category_name FROM catego
             <th>Product</th>
             <th>Quantity</th>
             <th>Price</th>
-            <th>Total Price</th>
+            <th>GST [%]</th>
+            <th>GST Amount</th>
+            <th>Total</th>
+            <th>Total with GST</th>
             <th>Remove</th>
           </tr>
         </thead>
@@ -193,210 +201,233 @@ $category_result = mysqli_query($con, "SELECT DISTINCT category_name FROM catego
   </div>
 
 
-    <!-- JS -->
-    <script>
-        let cart = []; //store products like cart
+  <!-- JS -->
+  <script>
+    let cart = []; //store products like cart
 
-        $(document).ready(function() {
-            $('#categorySelect').on('change', function() {
-                let category = $(this).val();
-                if (category !== "") {
-                    // 🔹 Load companies
-                    $.post('fetch_companies.php', {
-                        category
-                    }, function(response) {
-                        $('#companySelect').html(response);
-                        $('#productSelect').html('<option value="">-- Select Product --</option>');
-                    });
+    $(document).ready(function() {
+      $('#categorySelect').on('change', function() {
+        let category = $(this).val();
+        if (category !== "") {
+          // 🔹 Load companies
+          $.post('fetch_companies.php', {
+            category
+          }, function(response) {
+            $('#companySelect').html(response);
+            $('#productSelect').html('<option value="">-- Select Product --</option>');
+          });
 
-                    // 🔹 Load suppliers based on category
-                    $.post('pur_fetch_suppliers.php', {
-                        category
-                    }, function(response) {
-                        $('#supplierSelect').html(response);
-                    });
+          // 🔹 Load suppliers based on category
+          $.post('pur_fetch_suppliers.php', {
+            category
+          }, function(response) {
+            $('#supplierSelect').html(response);
+          });
 
-                } else {
-                    $('#companySelect').html('<option value="">-- Select Company --</option>');
-                    $('#productSelect').html('<option value="">-- Select Product --</option>');
-                    $('#supplierSelect').html('<option value="">-- Select Supplier --</option>');
-                }
-            });
+        } else {
+          $('#companySelect').html('<option value="">-- Select Company --</option>');
+          $('#productSelect').html('<option value="">-- Select Product --</option>');
+          $('#supplierSelect').html('<option value="">-- Select Supplier --</option>');
+        }
+      });
 
-            $('#companySelect').on('change', function() {
-                let category = $('#categorySelect').val();
-                let company = $(this).val();
-                if (category !== "" && company !== "") {
-                    $.post('pur_fetch_products.php', {
-                        category: category,
-                        company: company
-                    }, function(response) {
-                        $('#productSelect').html(response);
-                    });
-                } else {
-                    $('#productSelect').html('<option value="">-- Select Product --</option>');
-                }
-            });
+      $('#companySelect').on('change', function() {
+        let category = $('#categorySelect').val();
+        let company = $(this).val();
+        if (category !== "" && company !== "") {
+          $.post('pur_fetch_products.php', {
+            category: category,
+            company: company
+          }, function(response) {
+            $('#productSelect').html(response);
+          });
+        } else {
+          $('#productSelect').html('<option value="">-- Select Product --</option>');
+        }
+      });
 
-            $('#productSelect').on('change', function() {
-                const productName = $(this).val();
+      $('#productSelect').on('change', function() {
+        const productName = $(this).val();
 
-                if (productName !== "") {
-                    $.ajax({
-                        url: 'get_product_price.php',
-                        type: 'POST',
-                        data: {
-                            product_name: productName
-                        },
-                        success: function(response) {
-                            $('#priceInput').val("₹" + response);
-                        },
-                        error: function() {
-                            $('#priceInput').val("Error");
-                        }
-                    });
-                } else {
-                    $('#priceInput').val('');
-                }
-            });
+        if (productName !== "") {
+          $.ajax({
+            url: 'get_product_price.php',
+            type: 'POST',
+            data: {
+              product_name: productName
+            },
+            dataType: 'json',
 
-            $('#addbtn').click(function() {
-                const category = $('#categorySelect').val();
-                const company = $('#companySelect').val();
-                const product = $('#productSelect option:selected').text();
-                const productId = $('#productSelect').val();
-
-                const rawPrice = $('#priceInput').val().replace(/[^\d]/g, ''); // remove ₹
-                const price = parseInt(rawPrice);
-                const quantity = parseInt($('#quantityInput').val());
-                const totalprice = quantity * price;
-
-                if (!category || !company || !productId || !quantity || quantity <= 0 || isNaN(price)) {
-                    alert("Please fill all fields correctly.");
-                    return;
-                }
-
-                cart.push({
-                    category,
-                    company,
-                    product,
-                    productId,
-                    quantity,
-                    price,
-                    totalprice
-                });
-
-                renderCart();
-
-                // Total price of purchase order
-                let totalAmount = cart.reduce((sum, item) => sum + item.totalprice, 0);
-                $('#totalPurchaseAmount').text("Total Purchase Price: ₹" + totalAmount);
-
-
-
-                $('#quantityInput').val('');
-                $('#productSelect').val('');
+            success: function(response) {
+              if (response.success) {
+                $('#priceInput').val(response.cost_price);
+                $('#gstInput').val(response.gst_percent);
+              } else {
                 $('#priceInput').val('');
+                $('#gstInput').val('');
+              }
+            },
 
-                $('#productTableContainer').removeClass('d-none');
-                $('#supplierSection').removeClass('d-none');
-                // ✅ Disable category selection after first product is added
-                $('#categorySelect').prop('disabled', true);
-                $('#categoryLockNotice').removeClass('d-none');
-            });
+            error: function(xhr, status, error) {
+              console.log(xhr.responseText);
+              $('#priceInput').val('Error');
+              $('#gstInput').val('');
+            }
+          });
+        } else {
+          $('#priceInput').val('');
+          $('#gstInput').val('');
+        }
+      });
+
+
+      $('#addbtn').click(function() {
+        const category = $('#categorySelect').val();
+        const company = $('#companySelect').val();
+        const product = $('#productSelect option:selected').text();
+        const productId = $('#productSelect').val();
+
+        const rawPrice = $('#priceInput').val().replace(/[^\d]/g, ''); // remove ₹
+        const price = parseInt(rawPrice);
+        const quantity = parseInt($('#quantityInput').val());
+        const gstPercent = $('#gstInput').val();
+        const gstamount = Number(((quantity * price * gstPercent) /100).toFixed(2));
+        const total = Number((quantity * price).toFixed(2));
+        const totalprice = Number(((quantity * price)+gstamount).toFixed(2));
+
+
+        if (!category || !company || !productId || !quantity || quantity <= 0 || isNaN(price)) {
+          alert("Please fill all fields correctly.");
+          return;
+        }
+
+        cart.push({
+          category,
+          company,
+          product,
+          productId,
+          quantity,
+          gstPercent,     //GST percentage according to selected product
+          price,
+          gstamount,  //gst amount
+          total,      //total without jst amount
+          totalprice //total with gst
         });
 
-        function renderCart() {
-            let tbody = '';
-            cart.forEach((item, index) => {
-                tbody += `
+        renderCart();
+
+        // Total price of purchase order
+        let totalAmount = cart.reduce((sum, item) => sum + item.totalprice, 0);
+        $('#totalPurchaseAmount').text("Total Purchase Price: ₹" + totalAmount);
+
+
+
+        $('#quantityInput').val('');
+        $('#productSelect').val('');
+        $('#priceInput').val('');
+
+        $('#productTableContainer').removeClass('d-none');
+        $('#supplierSection').removeClass('d-none');
+        // ✅ Disable category selection after first product is added
+        $('#categorySelect').prop('disabled', true);
+        $('#categoryLockNotice').removeClass('d-none');
+      });
+    });
+
+    function renderCart() {
+      let tbody = '';
+      cart.forEach((item, index) => {
+        tbody += `
                     <tr>
                         <td>${item.category}</td>
                         <td>${item.company}</td>
                         <td>${item.product}</td>
                         <td>${item.quantity}</td>
                         <td>${item.price}</td>
+                        <td>${item.gstPercent} %</td>
+                        <td>${item.gstamount}</td>
+                        <td>${item.total}</td>
                         <td>${item.totalprice}</td>
                         <td><button class="btn btn-sm btn-danger" onclick="removeItem(${index})">Remove</button></td>
                     </tr>
                 `;
-            });
-            $('#productTableBody').html(tbody);
-            // 🔥 THIS IS IMPORTANT
-            let totalAmount = cart.reduce((sum, item) => sum + item.totalprice, 0);
-            $('#totalPurchaseAmount').text("Total Purchase Price: ₹" + totalAmount);
-        }
+      });
+      $('#productTableBody').html(tbody);
+      // 🔥 THIS IS IMPORTANT
+      let totalAmount =  Number(cart.reduce((sum, item) => sum + Number(item.totalprice), 0).toFixed(2));
+      $('#totalPurchaseAmount').text("Total Purchase Price: ₹" + totalAmount);
+    }
 
-        function removeItem(index) {
-            cart.splice(index, 1);
-            renderCart();
-            if (cart.length === 0) {
-                $('#productTableContainer').addClass('d-none');
-                $('#supplierSection').addClass('d-none');
-            }
-        }
+    function removeItem(index) {
+      cart.splice(index, 1);
+      renderCart();
+      if (cart.length === 0) {
+        $('#productTableContainer').addClass('d-none');
+        $('#supplierSection').addClass('d-none');
+      }
+    }
 
 
-        $('#supplierSelect').on('change', function() {
-            let supplierId = $(this).val();
+    $('#supplierSelect').on('change', function() {
+      let supplierId = $(this).val();
 
-            if (supplierId !== "") {
-                $.post('get_supplier_details.php', {
-                    supplier_id: supplierId
-                }, function(data) {
-                    const supplier = JSON.parse(data);
-                    $('#supplierCompany').val(supplier.company);
-                    $('#supplierPhone').val(supplier.phone);
-                    $('#supplierEmail').val(supplier.email);
-                    $('#supplierAddress').val(supplier.address);
-                });
-            } else {
-                $('#supplierCompany').val('');
-                $('#supplierPhone').val('');
-                $('#supplierEmail').val('');
-                $('#supplierAddress').val('');
-            }
+      if (supplierId !== "") {
+        $.post('get_supplier_details.php', {
+          supplier_id: supplierId
+        }, function(data) {
+          const supplier = JSON.parse(data);
+          $('#supplierCompany').val(supplier.company);
+          $('#supplierPhone').val(supplier.phone);
+          $('#supplierEmail').val(supplier.email);
+          $('#supplierAddress').val(supplier.address);
         });
+      } else {
+        $('#supplierCompany').val('');
+        $('#supplierPhone').val('');
+        $('#supplierEmail').val('');
+        $('#supplierAddress').val('');
+      }
+    });
 
 
-        function submitPurchase() {
-            const supplier = $('#supplierSelect').val();
-            const orderDate = $('#orderDate').val();
-            const expectedDate = $('#expectedDate').val();
+    function submitPurchase() {
+      const supplier = $('#supplierSelect').val();
+      const orderDate = $('#orderDate').val();
+      const expectedDate = $('#expectedDate').val();
 
-            if (!supplier || !orderDate || !expectedDate) {
-                alert("Please fill supplier and date details.");
-                return;
-            }
+      if (!supplier || !orderDate || !expectedDate) {
+        alert("Please fill supplier and date details.");
+        return;
+      }
 
-            const totalAmount = cart.reduce((sum, item) => sum + item.totalprice, 0); // Add this
+      const totalAmount = cart.reduce((sum, item) => sum + item.totalprice, 0); // Add this
 
-            const payload = {
-                cart,
-                supplier,
-                orderDate,
-                expectedDate,
-                totalAmount
-            };
+      const payload = {
+        cart,
+        supplier,
+        orderDate,
+        expectedDate,
+        totalAmount
+      };
 
-            // ✅ Send to backend
-            $.ajax({
-                url: 'insert_purchase.php',
-                type: 'POST',
-                data: {
-                    data: JSON.stringify(payload)
-                },
-                success: function(response) {
-                    alert("Purchase saved successfully!");
-                    console.log(response);
-                    location.reload(); // optional
-                },
-                error: function() {
-                    alert("Error while saving purchase.");
-                }
-            });
+      // ✅ Send to backend
+      $.ajax({
+        url: 'insert_purchase.php',
+        type: 'POST',
+        data: {
+          data: JSON.stringify(payload)
+        },
+        success: function(response) {
+          alert("Purchase saved successfully!");
+          console.log(response);
+          location.reload(); // optional
+        },
+        error: function() {
+          alert("Error while saving purchase.");
         }
-    </script>
+      });
+    }
+  </script>
 </body>
 
 </html>

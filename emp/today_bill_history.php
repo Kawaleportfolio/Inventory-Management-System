@@ -103,7 +103,7 @@ $bills = mysqli_query($con, $query);
                             <td><?= htmlspecialchars($item['product_name']) ?></td>
                             <td><?= $item['quantity'] ?></td>
                             <td>₹<?= $item['price_per_unit'] ?></td>
-                            <td>₹<?= $item['total_price'] ?></td>
+                            <td>₹<?= $item['total_amount'] ?></td>
                         </tr>
                         <?php } ?>
                     </tbody>

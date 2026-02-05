@@ -193,7 +193,7 @@ $current_month = isset($_GET['month']) ? $_GET['month'] : date('Y-m');
                             <td>{$bill['c_mobile']}</td>
                             <td>{$item['product_name']}</td>
                             <td>{$item['quantity']}</td>
-                            <td>₹{$item['total_price']}</td>
+                            <td>₹{$item['total_amount']}</td>
                         </tr>";
                     }
                 }

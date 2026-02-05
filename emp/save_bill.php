@@ -3,52 +3,65 @@
 include '../partials/auth_check.php';
 include '../partials/dbconnect.php';
 
-$e_name= $_SESSION['username'];
-$e_id= $_SESSION['u_id'];
+$e_name = $_SESSION['username'];
+$e_id = $_SESSION['u_id'];
 
 
 $customer_name = $_POST['customer_name'] ?? '';
 $customer_mobile = $_POST['customer_mobile'] ?? '';
 $cart = json_decode($_POST['cart'], true);
 
-$totalAmount = 0;
+$grandtotal = 0;
 foreach ($cart as $item1) {
-    // $price1 = $item1['price'];
-    // $qty1 = $item1['qty'];
-    $total1 = $item1['price'] * $item1['qty'];
-    $totalAmount += $total1;
+  // $price1 = $item1['price'];
+  // $qty1 = $item1['qty'];
+  // $total1 = $item1['price'] * $item1['qty'];
+
+  $total = $item1['price'] * $item1['qty'];
+  $gstamount = round($total * $item1['gst'] / 100, 2);
+
+  $totalAmount = round($total + $gstamount, 2);
+  $grandtotal += $totalAmount;
 }
 
 // 1. Insert into billing_master
 // mysqli_query($con, "INSERT INTO billing_master (customer_name, mobile, billing_date) VALUES ('$customer_name', '$customer_mobile', NOW())");
-mysqli_query($con, "INSERT INTO bill_master (employee_id, employee_name, bill_date, customer_name, c_mobile, total_amount) VALUES ('$e_id', '$e_name', NOW(), '$customer_name', '$customer_mobile', '$totalAmount')");
+mysqli_query($con, "INSERT INTO bill_master (employee_id, employee_name, bill_date, customer_name, c_mobile, total_amount) VALUES ('$e_id', '$e_name', NOW(), '$customer_name', '$customer_mobile', '$grandtotal')");
 $bill_id = mysqli_insert_id($con);
 
 // 2. Insert each item and reduce stock
 // $totalAmount = 0;
 foreach ($cart as $item) {
-    $name = $item['name'];
-    $barcode = $item['barcode'];
-    $price = $item['price'];
-    $qty = $item['qty'];
-    $total = $price * $qty;
-    // $totalAmount += $total;
+  $name = $item['name'];
+  $barcode = $item['barcode'];
+  $price = $item['price'];
+  $qty = $item['qty'];
+  $gst_percent = $item['gst'];
 
-    $product_id = mysqli_fetch_assoc(mysqli_query($con, "SELECT p_id FROM products WHERE barcode = '$barcode'"));
-    $p_id=$product_id['p_id'];
+  $total = $price * $qty;
+  $gst_amount = round($total * $gst_percent / 100, 2);
+  $total_amount = round($total + $gst_amount, 2);
+  // $grandtotal += $total_amount;
 
-    //insert in bill_items table
-    mysqli_query($con, "INSERT INTO bill_items (bill_id, product_name, p_id, quantity, price_per_unit, total_price) VALUES ('$bill_id', '$name', '$p_id', '$qty', '$price', '$total')");
+  $product_id = mysqli_fetch_assoc(mysqli_query($con, "SELECT p_id FROM products WHERE barcode = '$barcode'"));
+  $p_id = $product_id['p_id'];
 
-    // Reduce stock
-    mysqli_query($con, "UPDATE product_stock SET product_qty = product_qty - $qty WHERE p_id = $p_id");
+  //insert in bill_items table
+  mysqli_query($con, "INSERT INTO bill_items (bill_id, product_name, p_id, quantity, price_per_unit, gst_percent, gst_amount, total, total_amount) VALUES ('$bill_id', '$name', '$p_id', '$qty', '$price', '$gst_percent', '$gst_amount', '$total', '$total_amount')");
+
+  // Reduce stock
+  mysqli_query($con, "UPDATE product_stock SET product_qty = product_qty - $qty WHERE p_id = $p_id");
 }
 
 // Generate printable invoice with download option
 $itemsHtml = '';
 $i = 1;
 foreach ($cart as $item) {
-  $lineTotal = $item['price'] * $item['qty'];
+  // $taxable_amount = $item['price'] * $item['qty'];
+  $total = $item['price'] * $item['qty'];
+  $gstamount = round($total * $item['gst'] / 100, 2);
+
+  $totalamount = round($total + $gstamount, 2);
   $itemsHtml .= "
     <tr>
       <td>{$i}</td>
@@ -56,7 +69,10 @@ foreach ($cart as $item) {
       <td>{$item['barcode']}</td>
       <td>₹{$item['price']}</td>
       <td>{$item['qty']}</td>
-      <td>₹" . number_format($lineTotal, 2) . "</td> 
+      <td>{$item['gst']}%</td>      
+      <td>₹" . number_format($gstamount, 2) . "</td> 
+      <td>₹" . number_format($total, 2) . "</td>
+      <td>₹" .number_format($totalamount, 2). "</td>
     </tr>";
   $i++;
 }
@@ -129,14 +145,17 @@ $html = "
         <th>Barcode</th>
         <th>Price</th>
         <th>Qty</th>
-        <th>Total</th>
+        <th>GST [%]</th>
+        <th>GST Amount</th>
+        <th>Taxable Amount</th>
+        <th>Total Amount</th>
       </tr>
     </thead>
     <tbody>$itemsHtml</tbody>
     <tfoot>
       <tr>
         <th colspan='5' class='text-end'>Total Amount</th>
-        <th>₹" . number_format($totalAmount, 2) . "</th>
+        <th>₹" . number_format($grandtotal, 2) . "</th>
       </tr>
     </tfoot>
   </table>
@@ -167,4 +186,3 @@ $html = "
 </html>";
 
 echo $html;
-?>

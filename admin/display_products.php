@@ -96,6 +96,7 @@
             <th>Category</th>
             <th>Cost_price</th>
             <th>Selling_Price</th>
+            <th>GST Percentage [%]</th>
             <th>Barcode</th>
         </tr>
     </thead>
@@ -132,6 +133,7 @@ $(document).ready(function() {
             { "data": "category" },
             { "data": "cost_price" },
             { "data": "selling_price" },
+            { "data": "gst_percent"},
             { "data": "barcode" }
         ]
     });

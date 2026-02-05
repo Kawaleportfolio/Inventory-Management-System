@@ -92,18 +92,18 @@ $pur_arr = mysqli_query($con, $query);
         // Fetch purchase items
         $items = mysqli_query($con, "SELECT * FROM purchase_items WHERE purchase_id = $pur_id");
 
-        $supp = mysqli_fetch_assoc(mysqli_query($con, "SELECT s.supplier_name, s.phone, s.email FROM purchases p JOIN suppliers s ON p.supplier_id = s.supplier_id WHERE p.purchase_id = $pur_id"));
+        $supp = mysqli_fetch_assoc(mysqli_query($con, "SELECT s.supplier_name, s.phone, s.email, s.gst_number FROM purchases p JOIN suppliers s ON p.supplier_id = s.supplier_id WHERE p.purchase_id = $pur_id"));
 
     ?>
     <div class="card">
         <div class="card-header bg-primary text-white cart_header">
             <div class="d-flex justify-content-between">
                 #<?= $i++ ?> <div><strong>Supplier Name:</strong> <?= htmlspecialchars($supp['supplier_name']) ?> | <strong>Status: </strong><?= $purchase['status'] ?> | <strong>Order Date: </strong><?= $purchase['order_date'] ?> </div>
-                <div><strong>Total: ₹<?= $purchase['total_amount'] ?></strong></div>
+                <div><strong>Total Purchase Amount: ₹<?= $purchase['total_amount'] ?></strong></div>
             </div>
         </div>
         <div class="card-body card_body" style="display: none;">
-            <p><strong>Purchase_ID: <?= $purchase['purchase_id'] ?></strong> <br> <strong>Supplier Mobile: </strong> <?= htmlspecialchars($supp['phone']) ?> | <strong>Supplier Email: </strong> <?= htmlspecialchars($supp['email']) ?> </p> 
+            <p><strong>Purchase_ID: <?= $purchase['purchase_id'] ?></strong> <br> <strong>Supplier Mobile: </strong> <?= htmlspecialchars($supp['phone']) ?> | <strong>Supplier Email: </strong> <?= htmlspecialchars($supp['email']) ?> <br> <strong>GST Number: </strong> <?= htmlspecialchars($supp['gst_number']) ?> </p> 
 
             <div class="table-responsive">
                 <table class="table table-sm table-bordered item-table">
@@ -111,9 +111,12 @@ $pur_arr = mysqli_query($con, $query);
                         <tr>
                             <th>Sr No.</th>
                             <th>Product</th>
-                            <th>Qty</th>
                             <th>Price/Unit</th>
-                            <th>Total</th>
+                            <th>Quantity</th>
+                            <th>GST[%]</th>
+                            <th>GST Total</th>
+                            <th>Taxable Amount</th>
+                            <th>Grand Total</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -126,8 +129,11 @@ $pur_arr = mysqli_query($con, $query);
                         <tr>
                             <td><?= $j++ ?></td>
                             <td><?= htmlspecialchars($pr['p_name']) ?></td>
-                            <td><?= $item['quantity'] ?></td>
                             <td>₹<?= $item['cost_price'] ?></td>
+                            <td><?= $item['quantity'] ?></td>
+                            <th><?= $item['gst_percent'] ?></th>
+                            <th><?= $item['gst_amount'] ?></th>
+                            <th><?= $item['total'] ?></th>
                             <td>₹<?= $item['total_price'] ?></td>
                         </tr>
                         <?php } ?>

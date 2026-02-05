@@ -146,7 +146,8 @@ $current_date=date('Y-m-d');
                     <th>Mobile</th>
                     <th>Product</th>
                     <th>Qty</th>
-                    <th>Amount</th>
+                    <th>Taxable Amount</th>
+                    <th>Total Amount</th>
                 </tr>
             </thead>
             <tbody>
@@ -164,7 +165,8 @@ $current_date=date('Y-m-d');
                             <td>{$bill['c_mobile']}</td>
                             <td>{$item['product_name']}</td>
                             <td>{$item['quantity']}</td>
-                            <td>₹{$item['total_price']}</td>
+                            <td>₹{$item['total']}</td>
+                            <td>₹{$item['total_amount']}</td>
                         </tr>";
                     }
                 }
@@ -186,6 +188,8 @@ $current_date=date('Y-m-d');
                     <th>Expected Date</th>
                     <th>Status</th>
                     <th>Delivered Date</th>
+                    <th>Taxable Amount</th>
+                    <th>GST Amount</th>
                     <th>Total Amount</th>
                     <th>Product</th>
                     <th>Qty</th>
@@ -193,7 +197,7 @@ $current_date=date('Y-m-d');
             </thead>
             <tbody>
                 <?php
-                $result = mysqli_query($con, "SELECT p.purchase_id, s.supplier_name, s.phone, p.order_date, p.expected_delivery_date, p.status, p.delivered_date, p.total_amount, pr.p_name, pi.quantity FROM purchases p JOIN suppliers s ON p.supplier_id = s.supplier_id JOIN purchase_items pi ON p.purchase_id = pi.purchase_id JOIN products pr ON pi.p_id = pr.p_id where p.order_date = '$current_date' ORDER BY p.purchase_id ASC");
+                $result = mysqli_query($con, "SELECT p.purchase_id, s.supplier_name, s.phone, p.order_date, p.expected_delivery_date, p.status, p.delivered_date, pr.p_name, pi.quantity, pi.total_price, pi.total, pi.gst_amount FROM purchases p JOIN suppliers s ON p.supplier_id = s.supplier_id JOIN purchase_items pi ON p.purchase_id = pi.purchase_id JOIN products pr ON pi.p_id = pr.p_id where p.order_date = '$current_date' ORDER BY p.purchase_id ASC");
                 while ($row = mysqli_fetch_assoc($result)) {
                     echo "<tr>
                         <td>{$row['purchase_id']}</td>
@@ -203,7 +207,9 @@ $current_date=date('Y-m-d');
                         <td>" . date('Y-m-d', strtotime($row['expected_delivery_date'])) . "</td>
                         <td>{$row['status']}</td>
                         <td>" . ($row['delivered_date'] ? date('Y-m-d', strtotime($row['delivered_date'])) : 'Not Delivered') . "</td>
-                        <td>₹{$row['total_amount']}</td>
+                        <td>₹{$row['total']}</td>
+                        <td>₹{$row['gst_amount']}</td>
+                        <td>₹{$row['total_price']}</td>
                         <td>{$row['p_name']}</td>
                         <td>{$row['quantity']}</td>
                     </tr>";

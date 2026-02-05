@@ -101,6 +101,9 @@
             <th>Barcode</th>
             <th>Price</th>
             <th>Qty</th>
+            <th>GST Percent(%)</th>
+            <th>GST Amount</th>
+            <th>Taxable Amount</th>
             <th>Total</th>
             <th>Remove</th>
           </tr>
@@ -129,6 +132,7 @@
         <div><strong>Name:</strong> <span id="modalName"></span></div>
         <div><strong>Price:</strong> ₹<span id="modalPrice"></span></div>
         <div><strong>Available Qty:</strong> <span id="modalavailableqty" class="text-success fw-bold"></span></div>
+        <div><strong>GST:</strong><span id="gstpercent"></span>%</div>
         <input type="number" id="modalQty" class="form-control mt-2" placeholder="Enter Quantity" min="1" value="1">
       </div>
       <div class="modal-footer">
@@ -200,6 +204,7 @@ $('#fetchProduct').click(() => {
         $('#modalName').text(data.name);
         $('#modalPrice').text(data.price);
         $('#modalavailableqty').text(data.ava_qty);
+        $('#gstpercent').text(data.gst);
         $('#modalBarcode').val(data.barcode);
         $('#modalQty').val(1);
         new bootstrap.Modal(document.getElementById('productModal')).show();
@@ -219,10 +224,11 @@ $('#addToCartModal').click(() => {
   const price = parseFloat($('#modalPrice').text());
   const barcode = $('#modalBarcode').val();
   const qty = parseInt($('#modalQty').val());
+  const gst = parseInt($('#gstpercent').text());
 
   if (!qty || qty < 1) return alert("Enter valid quantity");
 
-  cart.push({ name, barcode, price, qty });
+  cart.push({ name, barcode, price, qty, gst});
   updateCart();
   bootstrap.Modal.getInstance(document.getElementById('productModal')).hide();
 });
@@ -231,7 +237,10 @@ function updateCart() {
   const tbody = $('#cartTable tbody');
   tbody.empty();
   cart.forEach((item, i) => {
-    const total = item.price * item.qty;
+    const gst_amount=Number(((item.qty * item.price * item.gst) / 100).toFixed(2));
+    // const taxable_gst = item
+    const taxable_gst =Number((item.price * item.qty).toFixed(2));
+    const total = Number( (taxable_gst + gst_amount).toFixed(2));
     tbody.append(`
       <tr>
         <td>${i + 1}</td>
@@ -239,7 +248,10 @@ function updateCart() {
         <td>${item.barcode}</td>
         <td>₹${item.price}</td>
         <td>${item.qty}</td>
-        <td>₹${total.toFixed(2)}</td>
+        <td>${item.gst}%</td>
+        <td>₹${gst_amount}</td>
+        <td>₹${taxable_gst}</td>
+        <td>₹${total}</td>
         <td><button class="btn btn-danger btn-sm" onclick="removeItem(${i})">X</button></td>
       </tr>
     `);

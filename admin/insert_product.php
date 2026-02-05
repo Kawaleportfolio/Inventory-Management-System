@@ -8,6 +8,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $category_id = intval($_POST['category_id']);
     $cost_price = floatval($_POST['cost_price']);
     $selling_price = floatval($_POST['selling_price']);
+    $gst_percent = $_POST['gst_percent'];
 
     // Input validation
     if (
@@ -31,8 +32,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $prefix = strtoupper(substr($category_name, 0, 3));
 
     // Insert product without barcode
-    $insert = mysqli_query($con, "INSERT INTO products (p_name, company_name, category, cost_price, selling_price)
-        VALUES ('$p_name', '$company_name', '$category_name', $cost_price, $selling_price)");
+    $insert = mysqli_query($con, "INSERT INTO products (p_name, company_name, category, cost_price, selling_price, gst_percent)
+        VALUES ('$p_name', '$company_name', '$category_name', $cost_price, $selling_price, $gst_percent)");
 
     if ($insert) {
         $p_id = mysqli_insert_id($con);

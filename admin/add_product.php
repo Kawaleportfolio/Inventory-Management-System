@@ -72,41 +72,42 @@ $categories = mysqli_query($con, "SELECT category_id, category_name FROM categor
 
         /* Alert msg box */
         .alert-box {
-        animation: fadeSlideDown 0.6s ease-in-out;
-        transition: opacity 0.5s ease, transform 0.5s ease;
-    }
-
-    @keyframes fadeSlideDown {
-        0% {
-            opacity: 0;
-            transform: translateY(-20px);
+            animation: fadeSlideDown 0.6s ease-in-out;
+            transition: opacity 0.5s ease, transform 0.5s ease;
         }
-        100% {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
 
-    .alert-dismissible .btn-close {
-        position: absolute;
-        top: 0.75rem;
-        right: 1rem;
-    }
+        @keyframes fadeSlideDown {
+            0% {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .alert-dismissible .btn-close {
+            position: absolute;
+            top: 0.75rem;
+            right: 1rem;
+        }
     </style>
 </head>
 
 <body>
     <?php if (isset($_GET['success']) && isset($_GET['name'])): ?>
-    <div class="alert alert-success alert-dismissible fade show alert-box position-relative text-center fw-bold shadow-sm mx-auto mt-4" style="max-width: 600px; font-size: 18px;">
-        ✅ Product <strong><?= htmlspecialchars($_GET['name']) ?></strong> added successfully with a unique barcode!
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-<?php elseif (isset($_GET['exists']) && isset($_GET['name'])): ?>
-    <div class="alert alert-danger alert-dismissible fade show alert-box position-relative text-center fw-bold shadow-sm mx-auto mt-4" style="max-width: 600px; font-size: 18px;">
-        ❌ Product <strong><?= htmlspecialchars($_GET['name']) ?></strong> already exists. Please try another name.
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-<?php endif; ?>
+        <div class="alert alert-success alert-dismissible fade show alert-box position-relative text-center fw-bold shadow-sm mx-auto mt-4" style="max-width: 600px; font-size: 18px;">
+            ✅ Product <strong><?= htmlspecialchars($_GET['name']) ?></strong> added successfully with a unique barcode!
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    <?php elseif (isset($_GET['exists']) && isset($_GET['name'])): ?>
+        <div class="alert alert-danger alert-dismissible fade show alert-box position-relative text-center fw-bold shadow-sm mx-auto mt-4" style="max-width: 600px; font-size: 18px;">
+            ❌ Product <strong><?= htmlspecialchars($_GET['name']) ?></strong> already exists. Please try another name.
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    <?php endif; ?>
 
     <div class="container">
         <!-- Back to Admin Panel Button -->
@@ -144,21 +145,33 @@ $categories = mysqli_query($con, "SELECT category_id, category_name FROM categor
                         <label for="cost_price" class="form-label">Cost Price (₹) *</label>
                         <div class="input-group">
                             <span class="input-group-text">₹</span>
-                            <input type="number" step="0.01" min="0.01" name="cost_price" id="cost_price" class="form-control form-control-lg" required>
+                            <input type="number" min="0" name="cost_price" id="cost_price" class="form-control form-control-lg" required>
                         </div>
+                        <small class="text-muted">Enter amount excluding GST</small>
                     </div>
+
 
                     <div class="col-md-4">
                         <label for="selling_price" class="form-label">Selling Price (₹) *</label>
                         <div class="input-group">
                             <span class="input-group-text">₹</span>
-                            <input type="number" step="0.01" min="0.01" name="selling_price" id="selling_price" class="form-control form-control-lg" required>
+                            <input type="number" min="0" name="selling_price" id="selling_price" class="form-control form-control-lg" required>
                         </div>
+                        <small class="text-muted">Enter amount excluding GST</small>
                     </div>
-                    <!-- <div class="col-md-4">
-                        <label for="barcode" class="form-label">Barcode</label>
-                        <input type="text" name="barcode" id="barcode" class="form-control form-control-lg" value="<?php echo 'BAR' . rand(100000, 999999); ?>" disabled>
-                    </div> -->
+
+                    <div class="col-md-4">
+                        <label for="gst_percent" class="form-label">GST Percentage *</label>
+                        <select name="gst_percent" id="gst_percent" class="form-select form-select-lg" required>
+                            <option value="">-- Select GST --</option>
+                            <option value="0">0 %</option>
+                            <option value="5">5 %</option>
+                            <option value="12">12 %</option>
+                            <option value="18">18 %</option>
+                        </select>
+                        <small class="text-muted">GST will be applied during billing</small>
+                    </div>
+
 
                     <div class="col-12 text-center mt-4">
                         <button type="submit" class="btn-submit"> Add Product</button>
@@ -171,7 +184,7 @@ $categories = mysqli_query($con, "SELECT category_id, category_name FROM categor
 </body>
 <script>
     // Auto close alert after 5 seconds
-    document.addEventListener("DOMContentLoaded", function () {
+    document.addEventListener("DOMContentLoaded", function() {
         const alert = document.querySelector(".alert-box");
         if (alert) {
             setTimeout(() => {

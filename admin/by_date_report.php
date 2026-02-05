@@ -194,7 +194,7 @@ $selected_date = isset($_GET['date']) ? $_GET['date'] : date('Y-m-d');
                             <td>{$bill['c_mobile']}</td>
                             <td>{$item['product_name']}</td>
                             <td>{$item['quantity']}</td>
-                            <td>₹{$item['total_price']}</td>
+                            <td>₹{$item['total_amount']}</td>
                         </tr>";
                     }
                 }

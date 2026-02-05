@@ -8,7 +8,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['data'])) {
     $supplier_id = intval($data['supplier']);
     $order_date = $data['orderDate'];
     $expected_date = $data['expectedDate'];
-    $total_amount = floatval($data['totalAmount']);
+    $total_amount = number_format((float)$data['totalAmount'], 2, '.', '');
+
     $cart = $data['cart'];
 
     if (empty($cart)) {
@@ -34,9 +35,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['data'])) {
 
             $cost_price = intval($item['price']);
             $qty = intval($item['quantity']);
-            $total = intval($item['totalprice']);
 
-            $insertItemQuery = "INSERT INTO purchase_items (purchase_id, p_id, cost_price, quantity, total_price) VALUES ('$purchase_id', '$product_id', '$cost_price', '$qty', '$total')";
+            $gst= intval($item['gstPercent']);
+            $gst_amount = number_format((float)$item['gstamount'], 2, '.', '');
+            $total= intval($item['total']);
+
+            $totalprice = number_format((float)$item['totalprice'], 2, '.', '');
+
+
+            $insertItemQuery = "INSERT INTO purchase_items (purchase_id, p_id, cost_price, quantity, gst_percent, gst_amount, total, total_price) VALUES ('$purchase_id', '$product_id', '$cost_price', '$qty', '$gst', '$gst_amount', '$total', '$totalprice')";
             mysqli_query($con, $insertItemQuery);
         }
 
